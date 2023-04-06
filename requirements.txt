@@ -1,0 +1,7 @@
+tabulate
+pathlib
+numpy
+pandas
+hashlib
+tqdm
+
