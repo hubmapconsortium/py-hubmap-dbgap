@@ -33,10 +33,8 @@ def write_excel(df: pd.DataFrame, output_file: str | os.PathLike) -> None:
     the six file columns that exist already) divided by 3.
     It then appends that list to the end of the first row.
     """
-    cols = []
     unique_files = int((len(df.columns) - 8) / 3)
-    for _ in range(unique_files):
-        cols.extend(["filetype", "filename", "MD5_checksum"])
+    cols = unique_files * ["filetype", "filename", "MD5_checksum"]
     column_names = pd.DataFrame(cols)
     with pd.ExcelWriter(output_file, mode="a", if_sheet_exists="overlay") as writer:
         column_names.T.to_excel(
