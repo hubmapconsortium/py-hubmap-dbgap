@@ -2,7 +2,9 @@ import pathlib
 import warnings
 from pathlib import Path
 from shutil import rmtree
+from tqdm import tqdm
 
+from zipfile import ZipFile
 import hubmapbags
 import hubmapinventory
 import magic  # pyton-magic
@@ -11,7 +13,6 @@ import pandas as pd
 import requests
 import tabulate
 import yaml
-from tqdm import tqdm
 
 ###############################################################################################################
 # DISCLAIMER: @icaoberg this code is super alpha. Please be kind.
@@ -74,9 +75,10 @@ def submission(
     df = pd.DataFrame(columns=columns)
     df["sample_id"] = hubmap_ids
 
+    print("Gathering dataset metadata")
     for index, dataset in tqdm(df.iterrows()):
         pmetadata = hubmapbags.apis.get_provenance_info(
-            dataset["sample_id"], instance='prod', token=token
+            dataset["sample_id"], instance="prod", token=token
         )
 
         try:
@@ -116,7 +118,7 @@ def submission(
             print(pmetadata["organ_type"])
 
         metadata = hubmapbags.apis.get_dataset_info(
-            dataset["sample_id"], instance='prod', token=token
+            dataset["sample_id"], instance="prod", token=token
         )
 
         try:
@@ -131,12 +133,56 @@ def submission(
             print(e)
             print(pmetadata.get("donor_hubmap_id"))
 
+    print("Gathering donor metadata")
     __create_donor_metadata(df, token, directory)
+    print("Gathering sample attributes")
     __create_sample_attributes(df, token, directory)
+    print("Creating sample mapping")
     __create_sample_mapping(df, token, directory)
+    print("Downloading spreadsheets")
     __get_spreadhsheets(directory)
 
-    return True
+    data = []
+    for hubmap_id in tqdm(hubmap_ids):
+        metadata = hubmapbags.apis.get_dataset_info(
+            hubmap_id, instance="prod", token=token
+        )
+
+        # library_id = metadata["ingest_metadata"]["metadata"]["library_id"]
+
+        dataset = hubmapinventory.get(hubmap_id, token=token)
+        dataset = dataset.sort_values("filename")
+        dataset = dataset[
+            (dataset["filename"].str.contains("fq.gz"))
+            | (dataset["extension"] == ".fastq.gz")
+        ]
+        dataset = dataset[["filename", "md5"]]
+
+        datum = [
+            dbgap_study_id,
+            hubmap_id,
+            rstring(),
+            rstring(),
+            rstring(),
+            rstring(),
+            rstring(),
+            rstring(),
+            rstring(),
+            rstring(),
+            rstring(),
+            rstring(),
+            rstring(),
+        ]
+        for index, row in dataset.iterrows():
+            datum.extend(["fastq", row["filename"], row["md5"]])
+
+        data.append(datum)
+
+    df = pd.DataFrame(data)
+    output_file = f"{dbgap_study_id}/spreadsheet.xlsx"
+    write_excel(df, output_file)
+
+    return data
 
 
 ###############################################################################################################
@@ -181,6 +227,7 @@ def __create_donor_metadata(df: pd.DataFrame, token: str, directory: str) -> Non
     )
     donor.to_csv(f"{directory}/2a_SubjectConsent_DS.txt", index=False, sep="\t")
 
+
 ###############################################################################################################
 def __create_sample_attributes(df: pd.DataFrame, token: str, directory: str):
     URL = "https://raw.githubusercontent.com/hubmapconsortium/search-api/main/src/search-schema/data/definitions/enums/organ_types.yaml"
@@ -201,7 +248,7 @@ def __create_sample_attributes(df: pd.DataFrame, token: str, directory: str):
     sample_attributes["BODY_SITE"] = None
     for index, datum in tqdm(sample_attributes.iterrows()):
         metadata = hubmapbags.apis.get_dataset_info(
-            datum["sample_id"], token=token, instance='prod'
+            datum["sample_id"], token=token, instance="prod"
         )
 
         if datum["sample_id"] == "HBM347.RFGL.437":
@@ -234,27 +281,92 @@ def __create_sample_mapping(df: pd.DataFrame, token: str, directory: str):
     sample_mapping = sample_mapping.rename(
         columns={"donor_hubmap_id": "SUBJECT_ID", "sample_id": "SAMPLE_ID"}
     )
-    sample_mapping.to_csv(f'{directory}/3a_SSM_DS.txt', index=False, sep="\t")
+    sample_mapping.to_csv(f"{directory}/3a_SSM_DS.txt", index=False, sep="\t")
+
 
 ###############################################################################################################
 def __get_spreadhsheets(directory: str):
-    filename = '2b_SubjectConsent_DD.xlsx'
-    URL = "https://github.com/hubmapconsortium/py-hubmap-dbgap/blob/master/files/2b_SubjectConsent_DD.xlsx?raw=true"
-    temp_file = Path(f'{directory}/{filename}')
+    filename = "2b_SubjectConsent_DD.xlsx"
+    URL = "https://github.com/hubmapconsortium/py-hubmap-dbgap/blob/master/files/2b_SubjectConsent_DD.xlsx"
+    temp_file = Path(f"{directory}/{filename}")
     response = requests.get(URL)
     temp_file.write_bytes(response.content)
 
-    filename = '3b_SSM_DD.xlsx'
-    URL = "https://github.com/hubmapconsortium/py-hubmap-dbgap/blob/master/files/3b_SSM_DD.xlsx?raw=true"
-    temp_file = Path(f'{directory}/{filename}')
+    filename = "3b_SSM_DD.xlsx"
+    URL = "https://github.com/hubmapconsortium/py-hubmap-dbgap/blob/master/files/3b_SSM_DD.xlsx"
+    temp_file = Path(f"{directory}/{filename}")
     response = requests.get(URL)
     temp_file.write_bytes(response.content)
 
-    filename = '6b_SampleAttributes_DD.xlsx'
-    URL = "https://github.com/hubmapconsortium/py-hubmap-dbgap/blob/master/files/6b_SampleAttributes_DD.xlsx?raw=true"
-    temp_file = Path(f'{directory}/{filename}')
+    filename = "6b_SampleAttributes_DD.xlsx"
+    URL = "https://github.com/hubmapconsortium/py-hubmap-dbgap/blob/master/files/6b_SampleAttributes_DD.xlsx"
+    temp_file = Path(f"{directory}/{filename}")
     response = requests.get(URL)
     temp_file.write_bytes(response.content)
 
+    import shutil
+
+    filename = "spreadsheet.xlsx"
+    src = f"/media/icaoberg/Data/code/hive/py-hubmap-dbgap/files/{filename}"
+    dst = f"{directory}/{filename}"
+    shutil.copyfile(src, dst)
 
 
+###############################################################################################################
+import os
+import pandas as pd
+
+
+# Note: placeholder function name
+def write_excel(df: pd.DataFrame, output_file: str | os.PathLike) -> None:
+    # Drops any completely empty rows/columns.
+    df.dropna(how="all", inplace=True)
+    # Adds phs_accession and sample_IDm columns (indices 0 & 1).
+    with pd.ExcelWriter(output_file, mode="a", if_sheet_exists="overlay") as writer:
+        df.to_excel(
+            writer,
+            sheet_name="Sequence_Data",
+            columns=df.columns[:2],
+            startrow=1,
+            startcol=0,
+            index=False,
+            header=False,
+        )
+    # Adds file data, beginning at index 2.
+    with pd.ExcelWriter(output_file, mode="a", if_sheet_exists="overlay") as writer:
+        df.to_excel(
+            writer,
+            sheet_name="Sequence_Data",
+            columns=df.columns[2:],
+            startrow=1,
+            startcol=13,
+            index=False,
+            header=False,
+        )
+    """
+    Creates the repeated set of headers for each file, based on the number
+    of columns minus 8 (representing phs_accession, sample_IDm, and
+    the six file columns that exist already) divided by 3.
+    It then appends that list to the end of the first row.
+    """
+    unique_files = int((len(df.columns) - 8) / 3)
+    cols = unique_files * ["filetype", "filename", "MD5_checksum"]
+    column_names = pd.DataFrame(cols)
+    with pd.ExcelWriter(output_file, mode="a", if_sheet_exists="overlay") as writer:
+        column_names.T.to_excel(
+            writer,
+            sheet_name="Sequence_Data",
+            startrow=0,
+            startcol=19,
+            index=False,
+            header=False,
+        )
+
+
+import random
+
+
+def rstring():
+    random.shuffle(x := list("abcdefghijklmnopqrstuvwxyz"))
+    x = "".join(x).upper()
+    return x
