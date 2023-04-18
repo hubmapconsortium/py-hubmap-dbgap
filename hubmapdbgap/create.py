@@ -2,9 +2,7 @@ import pathlib
 import warnings
 from pathlib import Path
 from shutil import rmtree
-from tqdm import tqdm
 
-from zipfile import ZipFile
 import hubmapbags
 import hubmapinventory
 import magic  # pyton-magic
@@ -13,6 +11,7 @@ import pandas as pd
 import requests
 import tabulate
 import yaml
+from tqdm import tqdm
 
 ###############################################################################################################
 # DISCLAIMER: @icaoberg this code is super alpha. Please be kind.
@@ -148,7 +147,51 @@ def submission(
             hubmap_id, instance="prod", token=token
         )
 
-        # library_id = metadata["ingest_metadata"]["metadata"]["library_id"]
+        ometadata = hubmapbags.apis.get_provenance_info(
+            hubmap_id, instance="prod", token=token
+        )
+
+        # THE METADATA
+        library_id = (
+            f'{metadata["ingest_metadata"]["metadata"]["library_id"]}-{hubmap_id}'
+        )
+        title = f'{metadata["data_types"][0]} of {ometadata["organ_type"][0]}'
+        library_strategy = metadata["data_types"]
+
+        analyte_class = {"RNA": "TRANSCRIPTOMIC", "DNA": "GENOMIC"}
+        library_source = analyte_class[
+            metadata["ingest_metadata"]["metadata"]["analyte_class"]
+        ]
+
+        library_layout = {"paired-end": "paired"}
+        library_layout = library_layout[
+            metadata["ingest_metadata"]["metadata"]["library_layout"]
+        ]
+
+        library_selection = "other"
+        platform = metadata["ingest_metadata"]["metadata"][
+            "acquisition_instrument_vendor"
+        ]
+        instrument_model = metadata["ingest_metadata"]["metadata"][
+            "acquisition_instrument_model"
+        ]
+
+        assay_type = metadata["data_types"][0]
+        protocols_io_doi = metadata["protocols_io_doi"]
+        acquisition_instrument_vendor = metadata["ingest_metadata"]["metadata"][
+            "acquisition_instrument_vendor"
+        ]
+        acquisition_instrument_model = metadata["ingest_metadata"]["metadata"][
+            "acquisition_instrument_model"
+        ]
+        sequencing_reagent_kit = metadata["ingest_metadata"]["metadata"][
+            "sequencing_reagent_kit"
+        ]
+
+        design_description = f"The protocol and materials for the {assay_type}library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
+
+        reference_genome_assembly = None
+        alignment_software = None
 
         dataset = hubmapinventory.get(hubmap_id, token=token)
         dataset = dataset.sort_values("filename")
@@ -161,17 +204,17 @@ def submission(
         datum = [
             dbgap_study_id,
             hubmap_id,
-            rstring(),
-            rstring(),
-            rstring(),
-            rstring(),
-            rstring(),
-            rstring(),
-            rstring(),
-            rstring(),
-            rstring(),
-            rstring(),
-            rstring(),
+            library_id,
+            title,
+            library_strategy,
+            library_source,
+            library_selection,
+            library_layout,
+            platform,
+            instrument_model,
+            design_description,
+            reference_genome_assembly,
+            alignment_software,
         ]
         for index, row in dataset.iterrows():
             datum.extend(["fastq", row["filename"], row["md5"]])
@@ -314,6 +357,7 @@ def __get_spreadhsheets(directory: str):
 
 ###############################################################################################################
 import os
+
 import pandas as pd
 
 
