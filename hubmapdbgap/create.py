@@ -1,6 +1,6 @@
+import os
 import pathlib
 import warnings
-import os
 from pathlib import Path
 from shutil import rmtree
 
@@ -348,12 +348,11 @@ def __get_spreadhsheets(directory: str):
     response = requests.get(URL)
     temp_file.write_bytes(response.content)
 
-    import shutil
-
     filename = "spreadsheet.xlsx"
-    src = f"/media/icaoberg/Data/code/hive/py-hubmap-dbgap/files/{filename}"
-    dst = f"{directory}/{filename}"
-    shutil.copyfile(src, dst)
+    URL = "https://github.com/hubmapconsortium/py-hubmap-dbgap/raw/master/files/spreadsheet.xlsx"
+    temp_file = Path(f"{directory}/{filename}")
+    response = requests.get(URL)
+    temp_file.write_bytes(response.content)
 
 
 ###############################################################################################################
