@@ -379,7 +379,9 @@ def write_excel(
     unique_files = int((len(df.columns) - 19) / 3)
     cols = unique_files * ["filetype", "filename", "MD5_checksum"]
     column_names = pd.DataFrame(cols)
-    with pd.ExcelWriter(output_file, mode="a", if_sheet_exists="overlay") as writer:
+    with pd.ExcelWriter(
+        output_file, mode="a", if_sheet_exists="overlay", engine="openpyxl"
+    ) as writer:
         column_names.T.to_excel(
             writer,
             sheet_name="Sequence_Data",
