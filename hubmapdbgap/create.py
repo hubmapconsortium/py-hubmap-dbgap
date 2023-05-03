@@ -266,9 +266,7 @@ def __create_donor_metadata(df: pd.DataFrame, token: str, directory: str) -> Non
             "subject_source": "SUBJECT_SOURCE",
         }
     )
-    donor = donor.reindex(
-        columns=["SUBJECT_ID", "CONSENT", "SEX", "SUBJECT_SOURCE", "SOURCE_SUBJECT_ID"]
-    )
+    donor = donor.reindex(columns=["SUBJECT_ID", "CONSENT", "SEX"])
     donor.to_csv(f"{directory}/2a_SubjectConsent_DS.txt", index=False, sep="\t")
 
 
