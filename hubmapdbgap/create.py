@@ -178,7 +178,7 @@ def submission(
         ]
 
         assay_type = metadata["data_types"][0]
-        protocols_io_doi = metadata["protocols_io_doi"]
+        protocols_io_doi = metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
         acquisition_instrument_vendor = metadata["ingest_metadata"]["metadata"][
             "acquisition_instrument_vendor"
         ]
@@ -195,6 +195,11 @@ def submission(
         alignment_software = None
 
         dataset = hubmapinventory.get(hubmap_id, token=token)
+
+        if dataset.empty:
+            print(f"Dataset {hubmap_id} has no inventory")
+            return df
+
         dataset = dataset.sort_values("filename")
         dataset = dataset[
             (dataset["filename"].str.contains("fq.gz"))
@@ -239,6 +244,7 @@ def __create_donor_metadata(df: pd.DataFrame, token: str, directory: str) -> Non
         metadata = hubmapbags.apis.get_entity_info(
             datum["donor_hubmap_id"], token=token, instance="prod"
         )
+
         if "living_donor_data" in metadata["metadata"].keys():
             for info in metadata["metadata"]["living_donor_data"]:
                 if info["grouping_concept_preferred_term"] == "Sex":
@@ -355,11 +361,13 @@ def __get_spreadhsheets(directory: str):
 
 ###############################################################################################################
 def write_excel(
-    df: pd.DataFrame, output_file: str | os.PathLike
+    df: pd.DataFrame, output_file: str
 ) -> None:  # Drops any completely empty rows/columns.
     df.dropna(how="all", inplace=True)
     # Adds non-file columns (indices 0-12, columns A-M).
-    with pd.ExcelWriter(output_file, mode="a", if_sheet_exists="overlay") as writer:
+    with pd.ExcelWriter(
+        output_file, mode="a", if_sheet_exists="overlay", engine="openpyxl"
+    ) as writer:
         df.to_excel(
             writer,
             sheet_name="Sequence_Data",
