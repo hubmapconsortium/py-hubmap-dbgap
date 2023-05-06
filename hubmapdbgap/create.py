@@ -1,4 +1,3 @@
-import os
 import pathlib
 import warnings
 from pathlib import Path
@@ -153,9 +152,13 @@ def submission(
         )
 
         # THE METADATA
-        library_id = (
-            f'{metadata["ingest_metadata"]["metadata"]["library_id"]}-{hubmap_id}'
-        )
+        try:
+            library_id = (
+                f'{metadata["ingest_metadata"]["metadata"]["library_id"]}-{hubmap_id}'
+            )
+        except:
+            library_id = f"lib-{hubmap_id}"
+
         title = f'{metadata["data_types"][0]} of {ometadata["organ_type"][0]}'
         library_strategy = metadata["data_types"]
 
@@ -164,7 +167,7 @@ def submission(
             metadata["ingest_metadata"]["metadata"]["analyte_class"]
         ]
 
-        library_layout = {"paired-end": "paired"}
+        library_layout = {"paired-end": "paired", "paired end": "paired"}
         library_layout = library_layout[
             metadata["ingest_metadata"]["metadata"]["library_layout"]
         ]
@@ -189,7 +192,7 @@ def submission(
             "sequencing_reagent_kit"
         ]
 
-        design_description = f"The protocol and materials for the {assay_type}library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
+        design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
 
         reference_genome_assembly = None
         alignment_software = None
