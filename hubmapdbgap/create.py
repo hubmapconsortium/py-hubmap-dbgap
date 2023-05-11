@@ -204,6 +204,7 @@ def submission(
             "NovaSeq 6000": "Illumina NovaSeq 6000",
             "Novaseq 6000": "Illumina NovaSeq 6000",
             "HiSeq": "HiSeq 4000",
+            "HiSeq 4000": "HiSeq 4000",
         }
         instrument_model = instrument_model[
             metadata["ingest_metadata"]["metadata"]["acquisition_instrument_model"]
