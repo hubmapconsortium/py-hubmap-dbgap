@@ -221,7 +221,10 @@ def submission(
             "sequencing_reagent_kit"
         ]
 
+        # deprecated design_description
         design_description = f"The protocol and materials for the {assay_type} library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
+
+        design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
 
         reference_genome_assembly = None
         alignment_software = None
@@ -301,9 +304,7 @@ def __create_donor_metadata(df: pd.DataFrame, token: str, directory: str) -> Non
             "subject_source": "SUBJECT_SOURCE",
         }
     )
-    donor = donor.reindex(
-        columns=["SUBJECT_ID", "CONSENT", "SEX", "SUBJECT_SOURCE", "SOURCE_SUBJECT_ID"]
-    )
+    donor = donor.reindex(columns=["SUBJECT_ID", "CONSENT", "SEX"])
     donor.to_csv(f"{directory}/2a_SubjectConsent_DS.txt", index=False, sep="\t")
 
 
@@ -392,9 +393,7 @@ def __get_spreadhsheets(directory: str):
 
 
 ###############################################################################################################
-
-
-def write_excel(df: pd.DataFrame, output_file: str | os.PathLike) -> None:
+def write_excel(df: pd.DataFrame, output_file: str) -> None:
     print(len(df))
     # Drops any completely empty rows/columns.
     df.dropna(how="all", inplace=True)
@@ -411,6 +410,7 @@ def write_excel(df: pd.DataFrame, output_file: str | os.PathLike) -> None:
             index=False,
             header=False,
         )
+
     """
     Creates the repeated set of headers for each file, based on the number
     of columns minus 19 (representing spreadsheet columns A-M and
@@ -420,7 +420,9 @@ def write_excel(df: pd.DataFrame, output_file: str | os.PathLike) -> None:
     unique_files = int((len(df.columns) - 19) / 3)
     cols = unique_files * ["filetype", "filename", "MD5_checksum"]
     column_names = pd.DataFrame(cols)
-    with pd.ExcelWriter(output_file, mode="a", if_sheet_exists="overlay") as writer:
+    with pd.ExcelWriter(
+        output_file, mode="a", if_sheet_exists="overlay", engine="openpyxl"
+    ) as writer:
         column_names.T.to_excel(
             writer,
             sheet_name="Sequence_Data",
@@ -429,9 +431,3 @@ def write_excel(df: pd.DataFrame, output_file: str | os.PathLike) -> None:
             index=False,
             header=False,
         )
-
-
-def rstring():
-    random.shuffle(x := list("abcdefghijklmnopqrstuvwxyz"))
-    x = "".join(x).upper()
-    return x
