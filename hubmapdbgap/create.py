@@ -184,7 +184,6 @@ def submission(
         ]
 
         library_layout = {"paired-end": "paired", "paired end": "paired"}
-
         library_layout = library_layout[
             metadata["ingest_metadata"]["metadata"]["library_layout"]
         ]
@@ -231,6 +230,11 @@ def submission(
         alignment_software = None
 
         dataset = hubmapinventory.get(hubmap_id, token=token)
+
+        if dataset.empty:
+            print(f"Dataset {hubmap_id} has no inventory")
+            return df
+
         dataset = dataset.sort_values("filename")
         dataset = dataset[
             (dataset["filename"].str.contains("fq.gz"))
@@ -278,6 +282,7 @@ def __create_donor_metadata(df: pd.DataFrame, token: str, directory: str) -> Non
         metadata = hubmapbags.apis.get_entity_info(
             datum["donor_hubmap_id"], token=token, instance="prod"
         )
+
         if "living_donor_data" in metadata["metadata"].keys():
             for info in metadata["metadata"]["living_donor_data"]:
                 if info["grouping_concept_preferred_term"] == "Sex":
@@ -393,9 +398,9 @@ def __get_spreadhsheets(directory: str):
 
 
 ###############################################################################################################
-def write_excel(df: pd.DataFrame, output_file: str) -> None:
-    print(len(df))
-    # Drops any completely empty rows/columns.
+def write_excel(
+    df: pd.DataFrame, output_file: str
+) -> None:  # Drops any completely empty rows/columns.
     df.dropna(how="all", inplace=True)
     print(len(df))
     # Adds non-file columns (indices 0-12, columns A-M).
