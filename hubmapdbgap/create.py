@@ -47,6 +47,7 @@ def submission(
     hubmap_ids: list[str],
     dbgap_study_id: str,
     token: str,
+    prepend_sample_id: bool,
 ) -> bool:
     """
     Main function that creates a dbGaP submission
@@ -259,7 +260,10 @@ def submission(
             alignment_software,
         ]
         for index, row in dataset.iterrows():
-            datum.extend(["fastq", row["filename"], row["md5"]])
+            if prepend_sample_id:
+                datum.extend(["fastq", f'{hubmap_id}-{row["filename"]}', row["md5"]])
+            else:
+                datum.extend(["fastq", row["filename"], row["md5"]])
 
         data.append(datum)
 
