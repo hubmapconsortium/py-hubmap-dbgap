@@ -2,10 +2,13 @@ import pathlib
 import warnings
 from pathlib import Path
 from shutil import rmtree
+import shutil
+import random
+import os
 
 import hubmapbags
 import hubmapinventory
-import magic  # python-magic
+import magic  # pyton-magic
 import numpy as np
 import pandas as pd
 import requests
@@ -44,6 +47,7 @@ def submission(
     hubmap_ids: list[str],
     dbgap_study_id: str,
     token: str,
+    prepend_sample_id: bool,
 ) -> bool:
     """
     Main function that creates a dbGaP submission
@@ -72,10 +76,12 @@ def submission(
     ]
 
     df = pd.DataFrame(columns=columns)
+    print(f"Adding {str(len(hubmap_ids))} to the main dataframe")
     df["sample_id"] = hubmap_ids
 
     print("Gathering dataset metadata")
-    for index, dataset in tqdm(df.iterrows()):
+    for index, dataset in df.iterrows():
+        print(f'Processing dataset {dataset["sample_id"]}')
         pmetadata = hubmapbags.apis.get_provenance_info(
             dataset["sample_id"], instance="prod", token=token
         )
@@ -83,8 +89,7 @@ def submission(
         try:
             df.loc[index, "donor_uuid"] = pmetadata["donor_uuid"][0]
         except Exception as e:
-            print(e)
-            print(pmetadata["donor_uuid"])
+            print(pmetadata)
 
         try:
             df.loc[index, "donor_hubmap_id"] = pmetadata["donor_hubmap_id"][0]
@@ -141,6 +146,7 @@ def submission(
     print("Downloading spreadsheets")
     __get_spreadhsheets(directory)
 
+    print("Processing dataset inventories")
     data = []
     for hubmap_id in tqdm(hubmap_ids):
         metadata = hubmapbags.apis.get_dataset_info(
@@ -160,7 +166,18 @@ def submission(
             library_id = f"lib-{hubmap_id}"
 
         title = f'{metadata["data_types"][0]} of {ometadata["organ_type"][0]}'
-        library_strategy = metadata["data_types"]
+
+        # library_strategy
+        library_strategy = {
+            "ATACseq-bulk": "ATAC-seq",
+            "WGS": "WGS",
+            "bulk-RNA": "RNA-Seq",
+            "scRNAseq-10xGenomics-v3": "RNA-Seq",
+            "snATACseq": "ATAC-seq",
+            "snRNAseq": "RNA-Seq",
+            "snRNAseq-10xGenomics-v3": "RNA-Seq",
+        }
+        library_strategy = library_strategy[metadata["data_types"][0]]
 
         analyte_class = {"RNA": "TRANSCRIPTOMIC", "DNA": "GENOMIC"}
         library_source = analyte_class[
@@ -172,12 +189,26 @@ def submission(
             metadata["ingest_metadata"]["metadata"]["library_layout"]
         ]
 
+        # library_selection
         library_selection = "other"
-        platform = metadata["ingest_metadata"]["metadata"][
-            "acquisition_instrument_vendor"
+
+        # platform
+        platform = {"Illumina": "ILLUMINA"}
+        platform = platform[
+            metadata["ingest_metadata"]["metadata"]["acquisition_instrument_vendor"]
         ]
-        instrument_model = metadata["ingest_metadata"]["metadata"][
-            "acquisition_instrument_model"
+
+        # instrument_model
+        instrument_model = {
+            "NovaSeq": "Illumina NovaSeq 6000",
+            "NovaSeq6000": "Illumina NovaSeq 6000",
+            "NovaSeq 6000": "Illumina NovaSeq 6000",
+            "Novaseq 6000": "Illumina NovaSeq 6000",
+            "HiSeq": "HiSeq 4000",
+            "HiSeq 4000": "HiSeq 4000",
+        }
+        instrument_model = instrument_model[
+            metadata["ingest_metadata"]["metadata"]["acquisition_instrument_model"]
         ]
 
         assay_type = metadata["data_types"][0]
@@ -191,6 +222,9 @@ def submission(
         sequencing_reagent_kit = metadata["ingest_metadata"]["metadata"][
             "sequencing_reagent_kit"
         ]
+
+        # deprecated design_description
+        design_description = f"The protocol and materials for the {assay_type} library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
 
         design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
 
@@ -226,15 +260,21 @@ def submission(
             alignment_software,
         ]
         for index, row in dataset.iterrows():
-            datum.extend(["fastq", row["filename"], row["md5"]])
+            if prepend_sample_id:
+                datum.extend(["fastq", f'{hubmap_id}-{row["filename"]}', row["md5"]])
+            else:
+                datum.extend(["fastq", row["filename"], row["md5"]])
 
         data.append(datum)
 
+    print("Creating dataframe")
     df = pd.DataFrame(data)
+
+    print("Writing dataframe to Excel spreadsheet")
     output_file = f"{dbgap_study_id}/spreadsheet.xlsx"
     write_excel(df, output_file)
 
-    return data
+    return df
 
 
 ###############################################################################################################
@@ -379,6 +419,7 @@ def write_excel(
             index=False,
             header=False,
         )
+
     """
     Creates the repeated set of headers for each file, based on the number
     of columns minus 19 (representing spreadsheet columns A-M and
@@ -399,12 +440,3 @@ def write_excel(
             index=False,
             header=False,
         )
-
-
-import random
-
-
-def rstring():
-    random.shuffle(x := list("abcdefghijklmnopqrstuvwxyz"))
-    x = "".join(x).upper()
-    return x
