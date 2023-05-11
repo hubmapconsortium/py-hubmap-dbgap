@@ -79,7 +79,7 @@ def submission(
     df["sample_id"] = hubmap_ids
 
     print("Gathering dataset metadata")
-    for index, dataset in tqdm(df.iterrows()):
+    for index, dataset in df.iterrows():
         print(f'Processing dataset {dataset["sample_id"]}')
         pmetadata = hubmapbags.apis.get_provenance_info(
             dataset["sample_id"], instance="prod", token=token
