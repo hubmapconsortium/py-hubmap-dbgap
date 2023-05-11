@@ -174,6 +174,7 @@ def submission(
             "bulk-RNA": "RNA-Seq",
             "scRNAseq-10xGenomics-v3": "RNA-Seq",
             "snATACseq": "ATAC-seq",
+            "Slide-seq": "RNA-Seq",
             "snRNAseq": "RNA-Seq",
             "snRNAseq-10xGenomics-v3": "RNA-Seq",
         }
