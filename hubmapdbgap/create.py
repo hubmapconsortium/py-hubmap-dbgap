@@ -403,7 +403,6 @@ def write_excel(
     df: pd.DataFrame, output_file: str
 ) -> None:  # Drops any completely empty rows/columns.
     df.dropna(how="all", inplace=True)
-    print(len(df))
     # Adds non-file columns (indices 0-12, columns A-M).
     with pd.ExcelWriter(
         output_file, mode="a", if_sheet_exists="overlay", engine="openpyxl"
