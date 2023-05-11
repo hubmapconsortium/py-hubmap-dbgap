@@ -1,12 +1,13 @@
-import os
 import pathlib
 import warnings
 from pathlib import Path
 from shutil import rmtree
+import random
+import os
 
 import hubmapbags
 import hubmapinventory
-import magic  # python-magic
+import magic  # pyton-magic
 import numpy as np
 import pandas as pd
 import requests
@@ -73,10 +74,12 @@ def submission(
     ]
 
     df = pd.DataFrame(columns=columns)
+    print(f"Adding {str(len(hubmap_ids))} to the main dataframe")
     df["sample_id"] = hubmap_ids
 
     print("Gathering dataset metadata")
     for index, dataset in tqdm(df.iterrows()):
+        print(f'Processing dataset {dataset["sample_id"]}')
         pmetadata = hubmapbags.apis.get_provenance_info(
             dataset["sample_id"], instance="prod", token=token
         )
@@ -84,8 +87,7 @@ def submission(
         try:
             df.loc[index, "donor_uuid"] = pmetadata["donor_uuid"][0]
         except Exception as e:
-            print(e)
-            print(pmetadata["donor_uuid"])
+            print(pmetadata)
 
         try:
             df.loc[index, "donor_hubmap_id"] = pmetadata["donor_hubmap_id"][0]
@@ -142,6 +144,7 @@ def submission(
     print("Downloading spreadsheets")
     __get_spreadhsheets(directory)
 
+    print("Processing dataset inventories")
     data = []
     for hubmap_id in tqdm(hubmap_ids):
         metadata = hubmapbags.apis.get_dataset_info(
@@ -153,32 +156,61 @@ def submission(
         )
 
         # THE METADATA
-        library_id = (
-            f'{metadata["ingest_metadata"]["metadata"]["library_id"]}-{hubmap_id}'
-        )
+        try:
+            library_id = (
+                f'{metadata["ingest_metadata"]["metadata"]["library_id"]}-{hubmap_id}'
+            )
+        except:
+            library_id = f"lib-{hubmap_id}"
+
         title = f'{metadata["data_types"][0]} of {ometadata["organ_type"][0]}'
-        library_strategy = metadata["data_types"]
+
+        # library_strategy
+        library_strategy = {
+            "ATACseq-bulk": "ATAC-seq",
+            "WGS": "WGS",
+            "bulk-RNA": "RNA-Seq",
+            "scRNAseq-10xGenomics-v3": "RNA-Seq",
+            "snATACseq": "ATAC-seq",
+            "snRNAseq": "RNA-Seq",
+            "snRNAseq-10xGenomics-v3": "RNA-Seq",
+        }
+        library_strategy = library_strategy[metadata["data_types"][0]]
 
         analyte_class = {"RNA": "TRANSCRIPTOMIC", "DNA": "GENOMIC"}
         library_source = analyte_class[
             metadata["ingest_metadata"]["metadata"]["analyte_class"]
         ]
 
-        library_layout = {"paired-end": "paired"}
+        library_layout = {"paired-end": "paired", "paired end": "paired"}
+
         library_layout = library_layout[
             metadata["ingest_metadata"]["metadata"]["library_layout"]
         ]
 
+        # library_selection
         library_selection = "other"
-        platform = metadata["ingest_metadata"]["metadata"][
-            "acquisition_instrument_vendor"
+
+        # platform
+        platform = {"Illumina": "ILLUMINA"}
+        platform = platform[
+            metadata["ingest_metadata"]["metadata"]["acquisition_instrument_vendor"]
         ]
-        instrument_model = metadata["ingest_metadata"]["metadata"][
-            "acquisition_instrument_model"
+
+        # instrument_model
+        instrument_model = {
+            "NovaSeq": "Illumina NovaSeq 6000",
+            "NovaSeq6000": "Illumina NovaSeq 6000",
+            "NovaSeq 6000": "Illumina NovaSeq 6000",
+            "Novaseq 6000": "Illumina NovaSeq 6000",
+            "HiSeq": "HiSeq 4000",
+        }
+        instrument_model = instrument_model[
+            metadata["ingest_metadata"]["metadata"]["acquisition_instrument_model"]
         ]
 
         assay_type = metadata["data_types"][0]
-        protocols_io_doi = metadata["protocols_io_doi"]
+        protocols_io_doi = metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
         acquisition_instrument_vendor = metadata["ingest_metadata"]["metadata"][
             "acquisition_instrument_vendor"
         ]
@@ -189,7 +221,7 @@ def submission(
             "sequencing_reagent_kit"
         ]
 
-        design_description = f"The protocol and materials for the {assay_type}library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
+        design_description = f"The protocol and materials for the {assay_type} library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
 
         reference_genome_assembly = None
         alignment_software = None
@@ -222,11 +254,14 @@ def submission(
 
         data.append(datum)
 
+    print("Creating dataframe")
     df = pd.DataFrame(data)
+
+    print("Writing dataframe to Excel spreadsheet")
     output_file = f"{dbgap_study_id}/spreadsheet.xlsx"
     write_excel(df, output_file)
 
-    return data
+    return df
 
 
 ###############################################################################################################
@@ -266,7 +301,9 @@ def __create_donor_metadata(df: pd.DataFrame, token: str, directory: str) -> Non
             "subject_source": "SUBJECT_SOURCE",
         }
     )
-    donor = donor.reindex(columns=["SUBJECT_ID", "CONSENT", "SEX"])
+    donor = donor.reindex(
+        columns=["SUBJECT_ID", "CONSENT", "SEX", "SUBJECT_SOURCE", "SOURCE_SUBJECT_ID"]
+    )
     donor.to_csv(f"{directory}/2a_SubjectConsent_DS.txt", index=False, sep="\t")
 
 
@@ -346,20 +383,26 @@ def __get_spreadhsheets(directory: str):
     response = requests.get(URL)
     temp_file.write_bytes(response.content)
 
+    import shutil
+
     filename = "spreadsheet.xlsx"
-    URL = "https://github.com/hubmapconsortium/py-hubmap-dbgap/raw/master/files/spreadsheet.xlsx"
-    temp_file = Path(f"{directory}/{filename}")
-    response = requests.get(URL)
-    temp_file.write_bytes(response.content)
+    src = f"/media/icaoberg/Data/code/hive/py-hubmap-dbgap/files/{filename}"
+    dst = f"{directory}/{filename}"
+    shutil.copyfile(src, dst)
 
 
 ###############################################################################################################
-def write_excel(
-    df: pd.DataFrame, output_file: str | os.PathLike
-) -> None:  # Drops any completely empty rows/columns.
+
+
+def write_excel(df: pd.DataFrame, output_file: str | os.PathLike) -> None:
+    print(len(df))
+    # Drops any completely empty rows/columns.
     df.dropna(how="all", inplace=True)
+    print(len(df))
     # Adds non-file columns (indices 0-12, columns A-M).
-    with pd.ExcelWriter(output_file, mode="a", if_sheet_exists="overlay") as writer:
+    with pd.ExcelWriter(
+        output_file, mode="a", if_sheet_exists="overlay", engine="openpyxl"
+    ) as writer:
         df.to_excel(
             writer,
             sheet_name="Sequence_Data",
@@ -377,9 +420,7 @@ def write_excel(
     unique_files = int((len(df.columns) - 19) / 3)
     cols = unique_files * ["filetype", "filename", "MD5_checksum"]
     column_names = pd.DataFrame(cols)
-    with pd.ExcelWriter(
-        output_file, mode="a", if_sheet_exists="overlay", engine="openpyxl"
-    ) as writer:
+    with pd.ExcelWriter(output_file, mode="a", if_sheet_exists="overlay") as writer:
         column_names.T.to_excel(
             writer,
             sheet_name="Sequence_Data",
@@ -388,9 +429,6 @@ def write_excel(
             index=False,
             header=False,
         )
-
-
-import random
 
 
 def rstring():
