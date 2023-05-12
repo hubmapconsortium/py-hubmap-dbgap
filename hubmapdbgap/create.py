@@ -178,7 +178,13 @@ def submission(
             "snRNAseq": "RNA-Seq",
             "snRNAseq-10xGenomics-v3": "RNA-Seq",
         }
-        library_strategy = library_strategy[metadata["data_types"][0]]
+
+        try:
+            library_strategy = library_strategy[metadata["data_types"][0]]
+        except Exception as error:
+            print(error)
+            print(metadata.keys())
+            return False
 
         analyte_class = {"RNA": "TRANSCRIPTOMIC", "DNA": "GENOMIC"}
         library_source = analyte_class[
