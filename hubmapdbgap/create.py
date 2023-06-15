@@ -16,17 +16,17 @@ import tabulate
 import yaml
 from tqdm import tqdm
 
-###############################################################################################################
+##########################################################################
 # DISCLAIMER: @icaoberg this code is super alpha. Please be kind.
 try:
     from pandas.core.common import SettingWithCopyWarning
 
     warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
-except:
+except BaseException:
     warnings.filterwarnings("ignore")
 
 
-###############################################################################################################
+##########################################################################
 def __pprint(msg: str):
     row = len(msg)
     h = "".join(["+"] + ["-" * row] + ["+"])
@@ -42,7 +42,7 @@ def __update_dataframe(
     return dataset
 
 
-###############################################################################################################
+##########################################################################
 def submission(
     hubmap_ids: list[str],
     dbgap_study_id: str,
@@ -162,7 +162,7 @@ def submission(
             library_id = (
                 f'{metadata["ingest_metadata"]["metadata"]["library_id"]}-{hubmap_id}'
             )
-        except:
+        except BaseException:
             library_id = f"lib-{hubmap_id}"
 
         title = f'{metadata["data_types"][0]} of {ometadata["organ_type"][0]}'
@@ -174,10 +174,17 @@ def submission(
             "bulk-RNA": "RNA-Seq",
             "scRNAseq-10xGenomics-v3": "RNA-Seq",
             "snATACseq": "ATAC-seq",
+            "Slide-seq": "RNA-Seq",
             "snRNAseq": "RNA-Seq",
             "snRNAseq-10xGenomics-v3": "RNA-Seq",
         }
-        library_strategy = library_strategy[metadata["data_types"][0]]
+
+        try:
+            library_strategy = library_strategy[metadata["data_types"][0]]
+        except Exception as error:
+            print(error)
+            print(metadata.keys())
+            return False
 
         analyte_class = {"RNA": "TRANSCRIPTOMIC", "DNA": "GENOMIC"}
         library_source = analyte_class[
@@ -204,8 +211,8 @@ def submission(
             "NovaSeq6000": "Illumina NovaSeq 6000",
             "NovaSeq 6000": "Illumina NovaSeq 6000",
             "Novaseq 6000": "Illumina NovaSeq 6000",
-            "HiSeq": "HiSeq 4000",
-            "HiSeq 4000": "HiSeq 4000",
+            "HiSeq": "Illumina HiSeq 4000",
+            "HiSeq 4000": "Illumina HiSeq 4000",
         }
         instrument_model = instrument_model[
             metadata["ingest_metadata"]["metadata"]["acquisition_instrument_model"]
@@ -226,7 +233,10 @@ def submission(
         # deprecated design_description
         design_description = f"The protocol and materials for the {assay_type} library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
 
+        # another deprecated design_description
         design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
+
+        design_description = f"“A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - Add Protocol Title Here.”"
 
         reference_genome_assembly = None
         alignment_software = None
@@ -277,7 +287,7 @@ def submission(
     return df
 
 
-###############################################################################################################
+##########################################################################
 def __create_donor_metadata(df: pd.DataFrame, token: str, directory: str) -> None:
     donor = df[["donor_hubmap_id", "donor_uuid"]]
     donor = donor.drop_duplicates(subset=["donor_hubmap_id"])
@@ -319,7 +329,7 @@ def __create_donor_metadata(df: pd.DataFrame, token: str, directory: str) -> Non
     donor.to_csv(f"{directory}/2a_SubjectConsent_DS.txt", index=False, sep="\t")
 
 
-###############################################################################################################
+##########################################################################
 def __create_sample_attributes(df: pd.DataFrame, token: str, directory: str):
     URL = "https://raw.githubusercontent.com/hubmapconsortium/search-api/main/src/search-schema/data/definitions/enums/organ_types.yaml"
 
@@ -366,7 +376,7 @@ def __create_sample_attributes(df: pd.DataFrame, token: str, directory: str):
     )
 
 
-###############################################################################################################
+##########################################################################
 def __create_sample_mapping(df: pd.DataFrame, token: str, directory: str):
     sample_mapping = df[["donor_hubmap_id", "sample_id"]]
     sample_mapping = sample_mapping.rename(
@@ -375,7 +385,7 @@ def __create_sample_mapping(df: pd.DataFrame, token: str, directory: str):
     sample_mapping.to_csv(f"{directory}/3a_SSM_DS.txt", index=False, sep="\t")
 
 
-###############################################################################################################
+##########################################################################
 def __get_spreadhsheets(directory: str):
     filename = "2b_SubjectConsent_DD.xlsx"
     URL = "https://github.com/hubmapconsortium/py-hubmap-dbgap/blob/master/files/2b_SubjectConsent_DD.xlsx"
@@ -402,7 +412,7 @@ def __get_spreadhsheets(directory: str):
     temp_file.write_bytes(response.content)
 
 
-###############################################################################################################
+##########################################################################
 def write_excel(
     df: pd.DataFrame, output_file: str
 ) -> None:  # Drops any completely empty rows/columns.
