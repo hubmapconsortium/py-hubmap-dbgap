@@ -2,9 +2,6 @@ import pathlib
 import warnings
 from pathlib import Path
 from shutil import rmtree
-import shutil
-import random
-import os
 
 import hubmapbags
 import hubmapinventory
@@ -43,6 +40,12 @@ def __update_dataframe(
 
 
 ##########################################################################
+def __print_to_file(output_filename, string):
+    with open(output_filename, "a") as file:
+        file.write(string)
+    file.close()
+
+
 def submission(
     hubmap_ids: list[str],
     dbgap_study_id: str,
@@ -169,7 +172,9 @@ def submission(
 
         # library_strategy
         library_strategy = {
+            "scRNA-Seq-10x": "RNA-Seq",
             "ATACseq-bulk": "ATAC-seq",
+            "scRNA-Seq-10x": "RNA-Seq",
             "WGS": "WGS",
             "bulk-RNA": "RNA-Seq",
             "scRNAseq-10xGenomics-v3": "RNA-Seq",
@@ -177,19 +182,20 @@ def submission(
             "Slide-seq": "RNA-Seq",
             "snRNAseq": "RNA-Seq",
             "snRNAseq-10xGenomics-v3": "RNA-Seq",
+            " scRNA-Seq-10x": "RNA-Seq",
         }
-
-        try:
-            library_strategy = library_strategy[metadata["data_types"][0]]
-        except Exception as error:
-            print(error)
-            print(metadata.keys())
-            return False
 
         analyte_class = {"RNA": "TRANSCRIPTOMIC", "DNA": "GENOMIC"}
         library_source = analyte_class[
             metadata["ingest_metadata"]["metadata"]["analyte_class"]
         ]
+
+        if metadata["data_types"][0] == "SNAREseq" and analyte_class == "RNA":
+            library_strategy = "RNA-Seq"
+        elif metadata["data_types"][0] == "SNAREseq" and analyte_class == "DNA":
+            library_strategy == "ATAC-Seq"
+        else:
+            library_strategy = library_strategy[metadata["data_types"][0]]
 
         library_layout = {"paired-end": "paired", "paired end": "paired"}
         library_layout = library_layout[
@@ -269,12 +275,24 @@ def submission(
             reference_genome_assembly,
             alignment_software,
         ]
+
+        bash_script_file = f"{dbgap_study_id}/script.sh"
+        if Path(bash_script_file).exists():
+            Path(bash_script_file).unlink()
+
+        __print_to_file(bash_script_file, "#!/bin/bash\n\n")
+        commands = ""
         for index, row in dataset.iterrows():
             if prepend_sample_id:
                 datum.extend(["fastq", f'{hubmap_id}-{row["filename"]}', row["md5"]])
+                commands = (
+                    f'{commands}cp -v {row["filename"]} {hubmap_id}-{row["filename"]}\n'
+                )
             else:
                 datum.extend(["fastq", row["filename"], row["md5"]])
+                commands = f'{commands}cp -v {row["filename"]} {row["filename"]}\n'
 
+        __print_to_file(bash_script_file, commands)
         data.append(datum)
 
     print("Creating dataframe")
