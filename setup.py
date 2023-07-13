@@ -5,7 +5,7 @@ setup(
     version="1.0",
     description="Generates submission for dbGaP",
     url="https://github.com/hubmapconsortium/py-hubmap-dbgap",
-    author="Ivan Cao-Berg",
+    author="Ivan Cao-Berg, Gesina Phillips",
     author_email="icaoberg@psc.edu",
     install_requires=[
         "pandas",
