@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# PyCharm files
+.idea/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Jupyter Notebook temporary files
+.ipynb_checkpoints/
+
+# Other
+*.log
+*.swp
+.DS_Store
