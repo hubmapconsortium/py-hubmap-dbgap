@@ -172,6 +172,8 @@ def submission(
 
         # library_strategy
         library_strategy = {
+            "SNARE-ATACseq2": "ATAC-seq",
+            "SNARE-RNAseq2": "RNA-Seq",
             "scRNA-Seq-10x": "RNA-Seq",
             "ATACseq-bulk": "ATAC-seq",
             "scRNA-Seq-10x": "RNA-Seq",
@@ -182,18 +184,25 @@ def submission(
             "Slide-seq": "RNA-Seq",
             "snRNAseq": "RNA-Seq",
             "snRNAseq-10xGenomics-v3": "RNA-Seq",
-            " scRNA-Seq-10x": "RNA-Seq",
+            "scRNA-Seq-10x": "RNA-Seq",
         }
 
         analyte_class = {"RNA": "TRANSCRIPTOMIC", "DNA": "GENOMIC"}
+
         library_source = analyte_class[
             metadata["ingest_metadata"]["metadata"]["analyte_class"]
         ]
 
-        if metadata["data_types"][0] == "SNAREseq" and analyte_class == "RNA":
+        if (
+            metadata["data_types"][0] == "SNAREseq"
+            and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "RNA"
+        ):
             library_strategy = "RNA-Seq"
-        elif metadata["data_types"][0] == "SNAREseq" and analyte_class == "DNA":
-            library_strategy == "ATAC-Seq"
+        elif (
+            metadata["data_types"][0] == "SNAREseq"
+            and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "DNA"
+        ):
+            library_strategy = "ATAC-Seq"
         else:
             library_strategy = library_strategy[metadata["data_types"][0]]
 
@@ -236,13 +245,23 @@ def submission(
             "sequencing_reagent_kit"
         ]
 
-        # deprecated design_description
+        protocols_io = {
+            "10.17504/protocols.io.86khzcw": "10X Genomics Single-Nucleus RNA-Sequencing for Transcriptomic Profiling of Adult Human Tissues V.3",
+            "10.17504/protocols.io.bpgzmjx6": "Library Generation using Slide-seqV2 V.1",
+            "10.17504/protocols.io.be5gjg3w": "SNARE-seq2 V.1",
+        }
+
+        protocols_io_title = protocols_io[
+            metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
+        ]
+
+        # deprecated design_description(s)
         design_description = f"The protocol and materials for the {assay_type} library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
-
-        # another deprecated design_description
         design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
-
         design_description = f"“A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - Add Protocol Title Here.”"
+
+        # current design_description
+        design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit. A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - {protocols_io_title}."
 
         reference_genome_assembly = None
         alignment_software = None
