@@ -172,15 +172,15 @@ def submission(
 
         # library_strategy
         library_strategy = {
-            "SNARE-ATACseq2": "ATAC-seq",
+            "SNARE-ATACseq2": "ATAC-Seq",
             "SNARE-RNAseq2": "RNA-Seq",
             "scRNA-Seq-10x": "RNA-Seq",
-            "ATACseq-bulk": "ATAC-seq",
+            "ATACseq-bulk": "ATAC-Seq",
             "scRNA-Seq-10x": "RNA-Seq",
             "WGS": "WGS",
             "bulk-RNA": "RNA-Seq",
             "scRNAseq-10xGenomics-v3": "RNA-Seq",
-            "snATACseq": "ATAC-seq",
+            "snATACseq": "ATAC-Seq",
             "Slide-seq": "RNA-Seq",
             "snRNAseq": "RNA-Seq",
             "snRNAseq-10xGenomics-v3": "RNA-Seq",
