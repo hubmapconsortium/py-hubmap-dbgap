@@ -230,14 +230,8 @@ def submission(
             "sequencing_reagent_kit"
         ]
 
-        # deprecated design_description
-        design_description = f"The protocol and materials for the {assay_type} library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
-
-        # another deprecated design_description
-        design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
-
-        design_description = f"“A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - Add Protocol Title Here.”"
-
+        design_description = f"A full description of the protocol and materials used in the assay_type library construction process can be found on protocols.io at dx.doi.org/{protocols_io_doi}."
+        
         reference_genome_assembly = None
         alignment_software = None
 
