@@ -259,6 +259,7 @@ def submission(
             "HiSeq 4000": "Illumina HiSeq 4000",
             "Nextseq2000": "NextSeq 2000",
             "Novaseq6020": "Illumina NovaSeq 6000",
+            "Novaseq6019": "Illumina NovaSeq 6000",
         }
         instrument_model = instrument_model[
             metadata["ingest_metadata"]["metadata"]["acquisition_instrument_model"]
@@ -290,6 +291,7 @@ def submission(
             "10.17504/protocols.io.bukqnuvw": "Nuclei Isolation from Tissue for 10x Multiome",
             "10.17504/protocols.io.be79jhr6": "HuBMAP UF TMC - 10x Genomics scRNAseq Modality Overview",
             "10.17504/protocols.io.9yih7ue": "sci-RNA-seq3",
+            "10.17504/protocols.io.be8mjhu6": "sci-ATAC-seq3",
         }
 
         try:
