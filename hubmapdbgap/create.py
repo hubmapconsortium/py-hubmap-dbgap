@@ -247,6 +247,7 @@ def submission(
             "10.17504/protocols.io.bpgzmjx6": "Library Generation using Slide-seqV2 V.1",
             "10.17504/protocols.io.be5gjg3w": "SNARE-seq2 V.1",
             "10.17504/protocols.io.bfwajpae": "10X snRNAseq Nuclei Isolation and Library Preparation Protocol ",
+            "10.17504/protocols.io.6t8herw": "Isolation of nuclei from frozen tissue for ATAC-seq and other epigenomic assays V.1",
         }
 
         protocols_io_title = protocols_io[
