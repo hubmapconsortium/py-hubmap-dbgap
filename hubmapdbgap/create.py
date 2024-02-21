@@ -47,10 +47,7 @@ def __print_to_file(output_filename, string):
 
 
 def submission(
-    hubmap_ids: list[str],
-    dbgap_study_id: str,
-    token: str,
-    prepend_sample_id: bool,
+    hubmap_ids: list[str], dbgap_study_id: str, token: str, prepend_sample_id: bool,
 ) -> bool:
     """
     Main function that creates a dbGaP submission
@@ -249,6 +246,7 @@ def submission(
             "10.17504/protocols.io.86khzcw": "10X Genomics Single-Nucleus RNA-Sequencing for Transcriptomic Profiling of Adult Human Tissues V.3",
             "10.17504/protocols.io.bpgzmjx6": "Library Generation using Slide-seqV2 V.1",
             "10.17504/protocols.io.be5gjg3w": "SNARE-seq2 V.1",
+            "10.17504/protocols.io.bfwajpae": "10X snRNAseq Nuclei Isolation and Library Preparation Protocol ",
         }
 
         protocols_io_title = protocols_io[
