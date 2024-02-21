@@ -2,6 +2,5 @@ tabulate
 pathlib
 numpy
 pandas
-hashlib
 tqdm
 openpyxl==3.1.2
