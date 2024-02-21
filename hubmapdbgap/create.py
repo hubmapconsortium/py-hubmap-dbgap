@@ -2,7 +2,9 @@ import pathlib
 import warnings
 from pathlib import Path
 from shutil import rmtree
-
+import zipfile
+import os
+from datetime import datetime
 import hubmapbags
 import hubmapinventory
 import magic  # pyton-magic
@@ -21,6 +23,16 @@ try:
     warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 except BaseException:
     warnings.filterwarnings("ignore")
+
+
+##########################################################################
+def __compress_folder(folder_path, output_path):
+    with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, folder_path)
+                zipf.write(file_path, arcname)
 
 
 ##########################################################################
@@ -330,6 +342,10 @@ def submission(
     print("Writing dataframe to Excel spreadsheet")
     output_file = f"{dbgap_study_id}/spreadsheet.xlsx"
     write_excel(df, output_file)
+
+    print(f"Compressing folder {dbgap_study_id}")
+    output_file = f"{dbgap_study_id}-{datetime.today().strftime('%Y-%m-%d')}.zip"
+    __compress_folder(dbgap_study_id, output_file)
 
     return df
 
