@@ -187,6 +187,7 @@ def submission(
             "SNARE-RNAseq2": "RNA-Seq",
             "scRNA-Seq-10x": "RNA-Seq",
             "sciRNAseq": "RNA-Seq",
+            "sciATACseq": "ATAC-Seq",
             "ATACseq-bulk": "ATAC-Seq",
             "scRNA-Seq-10x": "RNA-Seq",
             "WGS": "WGS",
@@ -220,6 +221,16 @@ def submission(
             and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "RNA"
         ):
             library_strategy = "RNA-Seq"
+        elif (
+            metadata["data_types"][0] == "sciATACseq"
+            and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "RNA"
+        ):
+            library_strategy = "RNA-Seq"
+        elif (
+            metadata["data_types"][0] == "sciATACseq"
+            and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "DNA"
+        ):
+            library_strategy = "ATAC-Seq"
         else:
             library_strategy = library_strategy[metadata["data_types"][0]]
 
@@ -276,6 +287,7 @@ def submission(
             "10.17504/protocols.io.bftnjnme": "Bulk RNA - Protocol for use with NEBNext Poly(A) mRNA Magnetic Isolation Module (NEB #E7490) and NEBNext Ultra II Directional RNA Library Prep Kit for Illumina (E7760, E7765)",
             "10.17504/protocols.io.bukqnuvw": "Nuclei Isolation from Tissue for 10x Multiome",
             "10.17504/protocols.io.be79jhr6": "HuBMAP UF TMC - 10x Genomics scRNAseq Modality Overview",
+            "10.17504/protocols.io.9yih7ue": "sci-RNA-seq3",
         }
 
         try:
