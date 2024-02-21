@@ -343,8 +343,11 @@ def submission(
     output_file = f"{dbgap_study_id}/spreadsheet.xlsx"
     write_excel(df, output_file)
 
-    print(f"Compressing folder {dbgap_study_id}")
-    output_file = f"{dbgap_study_id}-{datetime.today().strftime('%Y-%m-%d')}.zip"
+    output_file = f"{dbgap_study_id}-{datetime.today().strftime('%Y%m%d')}.zip"
+    print(f"Compressing folder {dbgap_study_id} to {output_file}")
+    if Path(output_file).exists():
+        Path(output_file).unlink()
+    
     __compress_folder(dbgap_study_id, output_file)
 
     return df
