@@ -254,6 +254,7 @@ def submission(
             "10.17504/protocols.io.bfsnjnde": "BulkATAC - Isolation of nuclei from frozen tissue for ATAC-seq and other epigenomic assays",
             "10.17504/protocols.io.bftnjnme": "Bulk RNA - Protocol for use with NEBNext Poly(A) mRNA Magnetic Isolation Module (NEB #E7490) and NEBNext Ultra II Directional RNA Library Prep Kit for Illumina (E7760, E7765)",
             "10.17504/protocols.io.bukqnuvw": "Nuclei Isolation from Tissue for 10x Multiome",
+            "10.17504/protocols.io.be79jhr6": "HuBMAP UF TMC - 10x Genomics scRNAseq Modality Overview",
         }
 
         try:
