@@ -328,10 +328,10 @@ def submission(
         for index, row in dataset.iterrows():
             if prepend_sample_id:
                 datum.extend(["fastq", f'{hubmap_id}-{row["filename"]}', row["md5"]])
-                commands = f'{commands}cp -v {dataset_directory}/{row["filename"]} {hubmap_id}-{row["filename"]}\n'
+                commands = f'{commands}cp -v "{dataset_directory}/{row["filename"]}" {hubmap_id}-{row["filename"]}\n'
             else:
                 datum.extend(["fastq", row["filename"], row["md5"]])
-                commands = f'{commands}cp -v {dataset_directory}/{row["filename"]} {row["filename"]}\n'
+                commands = f'{commands}cp -v "{dataset_directory}/{row["filename"]}" {row["filename"]}\n'
 
         __print_to_file(bash_script_file, commands)
         data.append(datum)
