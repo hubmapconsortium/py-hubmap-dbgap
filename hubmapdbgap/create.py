@@ -68,7 +68,7 @@ def submission(
     directory = dbgap_study_id
     p = pathlib.Path(directory)
     if p.exists() and p.is_dir():
-        print("Removing existing folder " + directory)
+        print(f'Removing existing folder "{directory}')
         rmtree(p)
 
     Path(directory).mkdir()
@@ -97,8 +97,6 @@ def submission(
         pmetadata = hubmapbags.apis.get_provenance_info(
             dataset["sample_id"], instance="prod", token=token
         )
-
-        dataset_directory = f'/hive/hubmap/data/{metadata["local_directory_rel_path"]}'
 
         try:
             df.loc[index, "donor_uuid"] = pmetadata["donor_uuid"][0]
@@ -138,6 +136,8 @@ def submission(
         metadata = hubmapbags.apis.get_dataset_info(
             dataset["sample_id"], instance="prod", token=token
         )
+
+        dataset_directory = f'/hive/hubmap/data/{metadata["local_directory_rel_path"]}'
 
         try:
             df.loc[index, "donor_uuid"] = pmetadata.get("donor_uuid")[0]
