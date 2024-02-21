@@ -186,6 +186,7 @@ def submission(
             "SNARE-ATACseq2": "ATAC-Seq",
             "SNARE-RNAseq2": "RNA-Seq",
             "scRNA-Seq-10x": "RNA-Seq",
+            "sciRNAseq": "RNA-Seq",
             "ATACseq-bulk": "ATAC-Seq",
             "scRNA-Seq-10x": "RNA-Seq",
             "WGS": "WGS",
@@ -214,6 +215,11 @@ def submission(
             and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "DNA"
         ):
             library_strategy = "ATAC-Seq"
+        elif (
+            metadata["data_types"][0] == "sciRNAseq"
+            and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "RNA"
+        ):
+            library_strategy = "RNA-Seq"
         else:
             library_strategy = library_strategy[metadata["data_types"][0]]
 
