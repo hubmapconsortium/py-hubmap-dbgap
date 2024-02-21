@@ -250,6 +250,10 @@ def submission(
             "10.17504/protocols.io.6t8herw": "Isolation of nuclei from frozen tissue for ATAC-seq and other epigenomic assays V.1",
             "10.17504/protocols.io.bf33jqqn": "10x Single Cell ATACseq Nuclei Isolation and Library Preparation Protocol",
             "10.17504/protocols.io.bvbmn2k6": "Chromium Multiome ATAC_GEX (10x)",
+            "10.17504/protocols.io.bfsmjnc6": "Bulk WGS - Ultra II DNA Library Prep Kit for Illumina E7645/E7103",
+            "10.17504/protocols.io.bfsnjnde": "BulkATAC - Isolation of nuclei from frozen tissue for ATAC-seq and other epigenomic assays",
+            "10.17504/protocols.io.bftnjnme": "Bulk RNA - Protocol for use with NEBNext Poly(A) mRNA Magnetic Isolation Module (NEB #E7490) and NEBNext Ultra II Directional RNA Library Prep Kit for Illumina (E7760, E7765)",
+            "10.17504/protocols.io.bukqnuvw": "Nuclei Isolation from Tissue for 10x Multiome",
         }
 
         try:
