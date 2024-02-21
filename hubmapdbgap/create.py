@@ -252,6 +252,7 @@ def submission(
         instrument_model = {
             "NovaSeq": "Illumina NovaSeq 6000",
             "NovaSeq6000": "Illumina NovaSeq 6000",
+            "Novaseq6000": "Illumina NovaSeq 6000",
             "NovaSeq 6000": "Illumina NovaSeq 6000",
             "Novaseq 6000": "Illumina NovaSeq 6000",
             "HiSeq": "Illumina HiSeq 4000",
