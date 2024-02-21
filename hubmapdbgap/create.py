@@ -98,6 +98,8 @@ def submission(
             dataset["sample_id"], instance="prod", token=token
         )
 
+        dataset_directory = f'/hive/hubmap/data/{metadata["local_directory_rel_path"]}'
+
         try:
             df.loc[index, "donor_uuid"] = pmetadata["donor_uuid"][0]
         except Exception as e:
@@ -326,12 +328,10 @@ def submission(
         for index, row in dataset.iterrows():
             if prepend_sample_id:
                 datum.extend(["fastq", f'{hubmap_id}-{row["filename"]}', row["md5"]])
-                commands = (
-                    f'{commands}cp -v {row["filename"]} {hubmap_id}-{row["filename"]}\n'
-                )
+                commands = f'{commands}cp -v {dataset_directory}/{row["filename"]} {hubmap_id}-{row["filename"]}\n'
             else:
                 datum.extend(["fastq", row["filename"], row["md5"]])
-                commands = f'{commands}cp -v {row["filename"]} {row["filename"]}\n'
+                commands = f'{commands}cp -v {dataset_directory}/{row["filename"]} {row["filename"]}\n'
 
         __print_to_file(bash_script_file, commands)
         data.append(datum)
@@ -347,7 +347,7 @@ def submission(
     print(f"Compressing folder {dbgap_study_id} to {output_file}")
     if Path(output_file).exists():
         Path(output_file).unlink()
-    
+
     __compress_folder(dbgap_study_id, output_file)
 
     return df
