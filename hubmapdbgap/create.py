@@ -249,11 +249,16 @@ def submission(
             "10.17504/protocols.io.bfwajpae": "10X snRNAseq Nuclei Isolation and Library Preparation Protocol ",
             "10.17504/protocols.io.6t8herw": "Isolation of nuclei from frozen tissue for ATAC-seq and other epigenomic assays V.1",
             "10.17504/protocols.io.bf33jqqn": "10x Single Cell ATACseq Nuclei Isolation and Library Preparation Protocol",
+            "10.17504/protocols.io.bvbmn2k6": "Chromium Multiome ATAC_GEX (10x)",
         }
 
-        protocols_io_title = protocols_io[
-            metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
-        ]
+        try:
+            protocols_io_title = protocols_io[
+                metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
+            ]
+        except:
+            print(metadata["ingest_metadata"]["metadata"]["protocols_io_doi"])
+            protocols_io_title = None
 
         # deprecated design_description(s)
         design_description = f"The protocol and materials for the {assay_type} library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
