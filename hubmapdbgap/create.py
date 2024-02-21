@@ -2,9 +2,6 @@ import pathlib
 import warnings
 from pathlib import Path
 from shutil import rmtree
-import shutil
-import random
-import os
 
 import hubmapbags
 import hubmapinventory
@@ -43,11 +40,14 @@ def __update_dataframe(
 
 
 ##########################################################################
+def __print_to_file(output_filename, string):
+    with open(output_filename, "a") as file:
+        file.write(string)
+    file.close()
+
+
 def submission(
-    hubmap_ids: list[str],
-    dbgap_study_id: str,
-    token: str,
-    prepend_sample_id: bool,
+    hubmap_ids: list[str], dbgap_study_id: str, token: str, prepend_sample_id: bool,
 ) -> bool:
     """
     Main function that creates a dbGaP submission
@@ -169,27 +169,39 @@ def submission(
 
         # library_strategy
         library_strategy = {
-            "ATACseq-bulk": "ATAC-seq",
+            "SNARE-ATACseq2": "ATAC-Seq",
+            "SNARE-RNAseq2": "RNA-Seq",
+            "scRNA-Seq-10x": "RNA-Seq",
+            "ATACseq-bulk": "ATAC-Seq",
+            "scRNA-Seq-10x": "RNA-Seq",
             "WGS": "WGS",
             "bulk-RNA": "RNA-Seq",
             "scRNAseq-10xGenomics-v3": "RNA-Seq",
-            "snATACseq": "ATAC-seq",
+            "snATACseq": "ATAC-Seq",
             "Slide-seq": "RNA-Seq",
             "snRNAseq": "RNA-Seq",
             "snRNAseq-10xGenomics-v3": "RNA-Seq",
+            "scRNA-Seq-10x": "RNA-Seq",
         }
 
-        try:
-            library_strategy = library_strategy[metadata["data_types"][0]]
-        except Exception as error:
-            print(error)
-            print(metadata.keys())
-            return False
-
         analyte_class = {"RNA": "TRANSCRIPTOMIC", "DNA": "GENOMIC"}
+
         library_source = analyte_class[
             metadata["ingest_metadata"]["metadata"]["analyte_class"]
         ]
+
+        if (
+            metadata["data_types"][0] == "SNAREseq"
+            and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "RNA"
+        ):
+            library_strategy = "RNA-Seq"
+        elif (
+            metadata["data_types"][0] == "SNAREseq"
+            and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "DNA"
+        ):
+            library_strategy = "ATAC-Seq"
+        else:
+            library_strategy = library_strategy[metadata["data_types"][0]]
 
         library_layout = {"paired-end": "paired", "paired end": "paired"}
         library_layout = library_layout[
@@ -230,8 +242,36 @@ def submission(
             "sequencing_reagent_kit"
         ]
 
-        design_description = f"A full description of the protocol and materials used in the assay_type library construction process can be found on protocols.io at dx.doi.org/{protocols_io_doi}."
-        
+        protocols_io = {
+            "10.17504/protocols.io.86khzcw": "10X Genomics Single-Nucleus RNA-Sequencing for Transcriptomic Profiling of Adult Human Tissues V.3",
+            "10.17504/protocols.io.bpgzmjx6": "Library Generation using Slide-seqV2 V.1",
+            "10.17504/protocols.io.be5gjg3w": "SNARE-seq2 V.1",
+            "10.17504/protocols.io.bfwajpae": "10X snRNAseq Nuclei Isolation and Library Preparation Protocol ",
+            "10.17504/protocols.io.6t8herw": "Isolation of nuclei from frozen tissue for ATAC-seq and other epigenomic assays V.1",
+            "10.17504/protocols.io.bf33jqqn": "10x Single Cell ATACseq Nuclei Isolation and Library Preparation Protocol",
+            "10.17504/protocols.io.bvbmn2k6": "Chromium Multiome ATAC_GEX (10x)",
+            "10.17504/protocols.io.bfsmjnc6": "Bulk WGS - Ultra II DNA Library Prep Kit for Illumina E7645/E7103",
+            "10.17504/protocols.io.bfsnjnde": "BulkATAC - Isolation of nuclei from frozen tissue for ATAC-seq and other epigenomic assays",
+            "10.17504/protocols.io.bftnjnme": "Bulk RNA - Protocol for use with NEBNext Poly(A) mRNA Magnetic Isolation Module (NEB #E7490) and NEBNext Ultra II Directional RNA Library Prep Kit for Illumina (E7760, E7765)",
+            "10.17504/protocols.io.bukqnuvw": "Nuclei Isolation from Tissue for 10x Multiome",
+        }
+
+        try:
+            protocols_io_title = protocols_io[
+                metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
+            ]
+        except:
+            print(metadata["ingest_metadata"]["metadata"]["protocols_io_doi"])
+            protocols_io_title = None
+
+        # deprecated design_description(s)
+        design_description = f"The protocol and materials for the {assay_type} library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
+        design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
+        design_description = f"“A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - Add Protocol Title Here.”"
+
+        # current design_description
+        design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit. A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - {protocols_io_title}."
+
         reference_genome_assembly = None
         alignment_software = None
 
@@ -263,12 +303,24 @@ def submission(
             reference_genome_assembly,
             alignment_software,
         ]
+
+        bash_script_file = f"{dbgap_study_id}/script.sh"
+        if Path(bash_script_file).exists():
+            Path(bash_script_file).unlink()
+
+        __print_to_file(bash_script_file, "#!/bin/bash\n\n")
+        commands = ""
         for index, row in dataset.iterrows():
             if prepend_sample_id:
                 datum.extend(["fastq", f'{hubmap_id}-{row["filename"]}', row["md5"]])
+                commands = (
+                    f'{commands}cp -v {row["filename"]} {hubmap_id}-{row["filename"]}\n'
+                )
             else:
                 datum.extend(["fastq", row["filename"], row["md5"]])
+                commands = f'{commands}cp -v {row["filename"]} {row["filename"]}\n'
 
+        __print_to_file(bash_script_file, commands)
         data.append(datum)
 
     print("Creating dataframe")
