@@ -285,7 +285,7 @@ def submission(
             metadata["ingest_metadata"]["metadata"]["acquisition_instrument_model"]
         ]
 
-        assay_type = metadata["dataset_type"][0]
+        assay_type = metadata["dataset_type"]
 
         # @icaoberg ignore field if missing. it is not known if field was moved
         try:
