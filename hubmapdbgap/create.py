@@ -289,8 +289,12 @@ def submission(
 
         # @icaoberg ignore field if missing. it is not known if field was moved
         try:
-            protocols_io_doi = metadata["ingest_metadata"]["metadata"][
-                "protocols_io_doi"
+            if "preparation_protocol_doi" in metadata["ingest_metadata"]:
+                protocols_io_doi = metadata["ingest_metadata"]["metadata"][
+                    "preparation_protocol_doi"
+            else:
+                protocols_io_doi = metadata["ingest_metadata"]["metadata"][
+                    "protocols_io_doi"
             ]
         except:
             protocols_io_doi = None
@@ -301,8 +305,9 @@ def submission(
         acquisition_instrument_model = metadata["ingest_metadata"]["metadata"][
             "acquisition_instrument_model"
         ]
-        sequencing_reagent_kit = metadata["ingest_metadata"]["metadata"][
+        sequencing_reagent_kit_raw = metadata["ingest_metadata"]["metadata"][
             "sequencing_reagent_kit"
+        sequencing_reagent_kit = sequencing_reagent_kit_raw.replace(';', '')
         ]
 
         # @icaoberg link is needed to map to a protocol description
@@ -324,8 +329,12 @@ def submission(
         }
 
         try:
-            protocols_io_title = protocols_io[
-                metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
+             if "preparation_protocol_doi" in metadata["ingest_metadata"]:
+                protocols_io_title = protocols_io[
+                    metadata["ingest_metadata"]["metadata"]["preparation_protocol_doi"]
+            else:
+                protocols_io_title = protocols_io[
+                    metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
             ]
         except:
             protocols_io_title = None
