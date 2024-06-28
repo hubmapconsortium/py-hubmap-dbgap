@@ -59,7 +59,10 @@ def __print_to_file(output_filename, string):
 
 
 def submission(
-    hubmap_ids: list[str], dbgap_study_id: str, token: str, prepend_sample_id: bool,
+    hubmap_ids: list[str],
+    dbgap_study_id: str,
+    token: str,
+    prepend_sample_id: bool,
 ) -> bool:
     """
     Main function that creates a dbGaP submission
@@ -179,7 +182,7 @@ def submission(
         except BaseException:
             library_id = f"lib-{hubmap_id}"
 
-        title = f'{metadata["data_types"][0]} of {ometadata["organ_type"][0]}'
+        title = f'{metadata["dataset_type"][0]} of {ometadata["organ_type"][0]}'
 
         # library_strategy
         library_strategy = {
@@ -198,41 +201,47 @@ def submission(
             "snRNAseq": "RNA-Seq",
             "snRNAseq-10xGenomics-v3": "RNA-Seq",
             "scRNA-Seq-10x": "RNA-Seq",
+            "MUSIC": "OTHER",
         }
 
-        analyte_class = {"RNA": "TRANSCRIPTOMIC", "DNA": "GENOMIC"}
+        analyte_class = {
+            "RNA": "TRANSCRIPTOMIC",
+            "DNA": "GENOMIC",
+            "DNA + RNA": "OTHER",
+        }
 
         library_source = analyte_class[
             metadata["ingest_metadata"]["metadata"]["analyte_class"]
         ]
 
         if (
-            metadata["data_types"][0] == "SNAREseq"
+            metadata["dataset_type"][0] == "SNAREseq"
             and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "RNA"
         ):
             library_strategy = "RNA-Seq"
         elif (
-            metadata["data_types"][0] == "SNAREseq"
+            metadata["dataset_type"][0] == "SNAREseq"
             and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "DNA"
         ):
             library_strategy = "ATAC-seq"
         elif (
-            metadata["data_types"][0] == "sciRNAseq"
+            metadata["dataset_type"][0] == "sciRNAseq"
             and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "RNA"
         ):
             library_strategy = "RNA-Seq"
         elif (
-            metadata["data_types"][0] == "sciATACseq"
+            metadata["dataset_type"][0] == "sciATACseq"
             and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "RNA"
         ):
             library_strategy = "RNA-Seq"
         elif (
-            metadata["data_types"][0] == "sciATACseq"
+            metadata["dataset_type"][0] == "sciATACseq"
             and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "DNA"
         ):
             library_strategy = "ATAC-seq"
         else:
-            library_strategy = library_strategy[metadata["data_types"][0]]
+            # library_strategy = library_strategy[metadata["dataset_type"][0]]
+            library_strategy = library_strategy[metadata["dataset_type"]]
 
         library_layout = {"paired-end": "paired", "paired end": "paired"}
         library_layout = library_layout[
@@ -276,8 +285,16 @@ def submission(
             metadata["ingest_metadata"]["metadata"]["acquisition_instrument_model"]
         ]
 
-        assay_type = metadata["data_types"][0]
-        protocols_io_doi = metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
+        assay_type = metadata["dataset_type"][0]
+
+        # @icaoberg ignore field if missing. it is not known if field was moved
+        try:
+            protocols_io_doi = metadata["ingest_metadata"]["metadata"][
+                "protocols_io_doi"
+            ]
+        except:
+            protocols_io_doi = None
+
         acquisition_instrument_vendor = metadata["ingest_metadata"]["metadata"][
             "acquisition_instrument_vendor"
         ]
@@ -288,6 +305,7 @@ def submission(
             "sequencing_reagent_kit"
         ]
 
+        # @icaoberg link is needed to map to a protocol description
         protocols_io = {
             "10.17504/protocols.io.86khzcw": "10X Genomics Single-Nucleus RNA-Sequencing for Transcriptomic Profiling of Adult Human Tissues V.3",
             "10.17504/protocols.io.bpgzmjx6": "Library Generation using Slide-seqV2 V.1",
@@ -310,7 +328,6 @@ def submission(
                 metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
             ]
         except:
-            print(metadata["ingest_metadata"]["metadata"]["protocols_io_doi"])
             protocols_io_title = None
 
         # deprecated design_description(s)
@@ -319,7 +336,10 @@ def submission(
         design_description = f"“A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - Add Protocol Title Here.”"
 
         # current design_description
-        design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit. A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - {protocols_io_title}."
+        if protocols_io_title is None:
+            design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit. A full description of the protocol and materials used in the {assay_type} library construction process."
+        else:
+            design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit. A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - {protocols_io_title}."
 
         reference_genome_assembly = None
         alignment_software = None
