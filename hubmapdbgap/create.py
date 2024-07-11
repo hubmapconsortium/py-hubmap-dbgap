@@ -288,16 +288,12 @@ def submission(
         assay_type = metadata["dataset_type"]
 
         # @icaoberg ignore field if missing. it is not known if field was moved
-        try:
-            if "preparation_protocol_doi" in metadata["ingest_metadata"]:
-                protocols_io_doi = metadata["ingest_metadata"]["metadata"][
-                    "preparation_protocol_doi"
-            else:
-                protocols_io_doi = metadata["ingest_metadata"]["metadata"][
-                    "protocols_io_doi"
-            ]
-        except:
-            protocols_io_doi = None
+        if "preparation_protocol_doi" in metadata["ingest_metadata"]["metadata"]:
+            protocols_io_doi = metadata["ingest_metadata"]["metadata"]["preparation_protocol_doi"]
+        elif "protocols_io_doi" in metadata["ingest_metadata"]["metadata"]:
+            protocols_io_doi = metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
+        else:
+            protocols_io_doi = "None"
 
         acquisition_instrument_vendor = metadata["ingest_metadata"]["metadata"][
             "acquisition_instrument_vendor"
