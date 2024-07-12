@@ -290,9 +290,13 @@ def submission(
 
         # @icaoberg ignore field if missing. it is not known if field was moved
         if "preparation_protocol_doi" in metadata["ingest_metadata"]["metadata"]:
-            protocols_io_doi = metadata["ingest_metadata"]["metadata"]["preparation_protocol_doi"]
+            protocols_io_doi = metadata["ingest_metadata"]["metadata"][
+                "preparation_protocol_doi"
+            ]
         elif "protocols_io_doi" in metadata["ingest_metadata"]["metadata"]:
-            protocols_io_doi = metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
+            protocols_io_doi = metadata["ingest_metadata"]["metadata"][
+                "protocols_io_doi"
+            ]
         else:
             protocols_io_doi = "None"
 
@@ -303,8 +307,9 @@ def submission(
             "acquisition_instrument_model"
         ]
         sequencing_reagent_kit_raw = metadata["ingest_metadata"]["metadata"][
-            "sequencing_reagent_kit"]
-        sequencing_reagent_kit = sequencing_reagent_kit_raw.replace(';', '')
+            "sequencing_reagent_kit"
+        ]
+        sequencing_reagent_kit = sequencing_reagent_kit_raw.replace(";", "")
 
         # @icaoberg link is needed to map to a protocol description
         protocols_io = {
@@ -324,16 +329,16 @@ def submission(
             "10.17504/protocols.io.be8mjhu6": "sci-ATAC-seq3",
         }
 
-        try:
-             if "preparation_protocol_doi" in metadata["ingest_metadata"]:
-                protocols_io_title = protocols_io[
-                    metadata["ingest_metadata"]["metadata"]["preparation_protocol_doi"]
-             else:
-                protocols_io_title = protocols_io[
-                    metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
+        if "preparation_protocol_doi" in metadata["ingest_metadata"]["metadata"]:
+            protocols_io_doi = metadata["ingest_metadata"]["metadata"][
+                "preparation_protocol_doi"
             ]
-        except:
-            protocols_io_title = None
+        elif "protocols_io_doi" in metadata["ingest_metadata"]["metadata"]:
+            protocols_io_doi = metadata["ingest_metadata"]["metadata"][
+                "protocols_io_doi"
+            ]
+        else:
+            protocols_io_doi = "None"
 
         # deprecated design_description(s)
         design_description = f"The protocol and materials for the {assay_type} library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
