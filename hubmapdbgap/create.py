@@ -188,7 +188,7 @@ def submission(
         library_strategy = {
             "SNARE-ATACseq2": "ATAC-seq",
             "SNARE-RNAseq2": "RNA-Seq",
-            "RNAseq": "RNA-Seq".
+            "RNAseq": "RNA-Seq",
             "scRNA-Seq-10x": "RNA-Seq",
             "sciRNAseq": "RNA-Seq",
             "sciATACseq": "ATAC-seq",
