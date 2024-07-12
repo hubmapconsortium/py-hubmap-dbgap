@@ -303,9 +303,8 @@ def submission(
             "acquisition_instrument_model"
         ]
         sequencing_reagent_kit_raw = metadata["ingest_metadata"]["metadata"][
-            "sequencing_reagent_kit"
+            "sequencing_reagent_kit"]
         sequencing_reagent_kit = sequencing_reagent_kit_raw.replace(';', '')
-        ]
 
         # @icaoberg link is needed to map to a protocol description
         protocols_io = {
