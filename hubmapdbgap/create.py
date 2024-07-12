@@ -338,7 +338,7 @@ def submission(
                 "protocols_io_doi"
             ]
         else:
-            protocols_io_doi = "None"
+            protocols_io_doi = None
 
         # deprecated design_description(s)
         design_description = f"The protocol and materials for the {assay_type} library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
