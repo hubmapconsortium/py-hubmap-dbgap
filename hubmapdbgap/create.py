@@ -328,7 +328,7 @@ def submission(
              if "preparation_protocol_doi" in metadata["ingest_metadata"]:
                 protocols_io_title = protocols_io[
                     metadata["ingest_metadata"]["metadata"]["preparation_protocol_doi"]
-            else:
+             else:
                 protocols_io_title = protocols_io[
                     metadata["ingest_metadata"]["metadata"]["protocols_io_doi"]
             ]
