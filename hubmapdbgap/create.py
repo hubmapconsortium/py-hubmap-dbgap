@@ -185,6 +185,7 @@ def submission(
         title = f'{metadata["dataset_type"][0]} of {ometadata["organ_type"][0]}'
 
         # library_strategy
+        # this maps some of the existing values in HuBMAP to accepted values in dbGaP
         library_strategy = {
             "SNARE-ATACseq2": "ATAC-seq",
             "SNARE-RNAseq2": "RNA-Seq",
@@ -198,6 +199,7 @@ def submission(
             "bulk-RNA": "RNA-Seq",
             "scRNAseq-10xGenomics-v3": "RNA-Seq",
             "snATACseq": "ATAC-seq",
+            "ATACseq": "ATAC-seq",
             "Slide-seq": "RNA-Seq",
             "snRNAseq": "RNA-Seq",
             "snRNAseq-10xGenomics-v3": "RNA-Seq",
@@ -340,6 +342,11 @@ def submission(
         else:
             protocols_io_doi = None
 
+        if protocols_io_doi is None:
+            protocols_io_title = None
+        else:
+            protocols_io_title = protocols_io[protocols_io_doi]
+
         # deprecated design_description(s)
         design_description = f"The protocol and materials for the {assay_type} library construction process can be found in the following protocols.io protocol: dx.doi.org/{protocols_io_doi}. The library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
         design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
@@ -388,17 +395,38 @@ def submission(
             Path(bash_script_file).unlink()
 
         __print_to_file(bash_script_file, "#!/bin/bash\n\n")
-        commands = ""
+
+    print("Creating helper scripts")
+    for hubmap_id in tqdm(hubmap_ids):
+        commands = f"# {hubmap_id}\n"
         for index, row in dataset.iterrows():
             if prepend_sample_id:
                 datum.extend(["fastq", f'{hubmap_id}-{row["filename"]}', row["md5"]])
-                commands = f'{commands}cp -v "{dataset_directory}/{row["filename"]}" {hubmap_id}-{row["filename"]}\n'
+                commands = f'{commands}cp -v "{dataset_directory}/{row["filename"]}" ./{hubmap_id}-{row["filename"]}\n'
             else:
                 datum.extend(["fastq", row["filename"], row["md5"]])
-                commands = f'{commands}cp -v "{dataset_directory}/{row["filename"]}" {row["filename"]}\n'
+                commands = f'{commands}cp -v "{dataset_directory}/{row["filename"]}" ./{row["filename"]}\n'
 
         __print_to_file(bash_script_file, commands)
         data.append(datum)
+
+    print("Creating upload script")
+    bash_script_file = f"{dbgap_study_id}/upload.sh"
+    commands = """#!/bin/bash
+
+module load aspera
+
+if [ -z "$ASPERA_SCP_PASS" ]; then
+     echo "Please set up the ASPERA_SCP_PASS variable to continuing uploading files to dbGaP"
+     exit 1
+else
+     echo "ASPERA_SCP_PASS is set to: $ASPERA_SCP_PASS"
+     # change the file extension depending on what you want to upload
+    find . -type f -name "*fastq.gz" | xargs -I {} -P 5 ascp -i "/hive/packages/aspera/4.2.8/etc/aspera_tokenauth_id_rsa" -Q -l 200m -k 1 {} asp-dbgap@gap-submit.ncbi.nlm.nih.gov:protected/
+fi
+    """
+
+    __print_to_file(bash_script_file, commands)
 
     print("Creating dataframe")
     df = pd.DataFrame(data)
