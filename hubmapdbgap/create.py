@@ -283,24 +283,14 @@ def submission(
             "Novaseq6002": "Illumina NovaSeq 6000",
             "Novaseq6001": "Illumina NovaSeq 6000",
             "Nextseq500-NS500488": "NextSeq 550",
+            "NextSeq2000": "NextSeq 2000",
+            "NextSeq550": "NextSeq 550"
         }
         instrument_model = instrument_model[
             metadata["ingest_metadata"]["metadata"]["acquisition_instrument_model"]
         ]
 
         assay_type = metadata["dataset_type"]
-
-        # @icaoberg ignore field if missing. it is not known if field was moved
-        if "preparation_protocol_doi" in metadata["ingest_metadata"]["metadata"]:
-            protocols_io_doi = metadata["ingest_metadata"]["metadata"][
-                "preparation_protocol_doi"
-            ]
-        elif "protocols_io_doi" in metadata["ingest_metadata"]["metadata"]:
-            protocols_io_doi = metadata["ingest_metadata"]["metadata"][
-                "protocols_io_doi"
-            ]
-        else:
-            protocols_io_doi = "None"
 
         acquisition_instrument_vendor = metadata["ingest_metadata"]["metadata"][
             "acquisition_instrument_vendor"
@@ -329,6 +319,8 @@ def submission(
             "10.17504/protocols.io.be79jhr6": "HuBMAP UF TMC - 10x Genomics scRNAseq Modality Overview",
             "10.17504/protocols.io.9yih7ue": "sci-RNA-seq3",
             "10.17504/protocols.io.be8mjhu6": "sci-ATAC-seq3",
+            "10.17504/protocols.io.5qpvob93dl4o/v1": "Overview of scRNA-seq of Human Knee Articular Cartilage",
+            "10.17504/protocols.io.dm6gpb7p5lzp/v1": "Overview of scRNA-seq of Human Knee Meniscus",
         }
 
         if "preparation_protocol_doi" in metadata["ingest_metadata"]["metadata"]:
