@@ -344,11 +344,21 @@ def submission(
         design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit."
         design_description = f"“A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - Add Protocol Title Here.”"
 
-        # current design_description
-        if protocols_io_title is None:
-            design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit. A full description of the protocol and materials used in the {assay_type} library construction process."
-        else:
-            design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit. A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - {protocols_io_title}."
+        # set design_description for Visium and non-Visium data
+        # add dataset link for Visium data
+        if "Visium" in dataset_type:
+            dataset_link = "https://portal.hubmapconsortium.org/browse/dataset/" + uuid            
+            # current design_description
+            if protocols_io_title is None:
+                design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit. A full description of the protocol and materials used in the {assay_type} library construction process. Visium images are available on the <a href=dataset_link>HuBMAP Portal</a>."
+            else:
+                design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit. A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - {protocols_io_title}. Visium images are available on the <a href=dataset_link>HuBMAP Portal</a>."
+       else:
+            # current design_description
+            if protocols_io_title is None:
+                design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit. A full description of the protocol and materials used in the {assay_type} library construction process."
+            else:
+                design_description = f"The {assay_type} library was sequenced on the {acquisition_instrument_vendor} {acquisition_instrument_model} system using the {sequencing_reagent_kit} kit. A full description of the protocol and materials used in the {assay_type} library construction process can be found on protocols.io under the following protocol - {protocols_io_title}."
 
         reference_genome_assembly = None
         alignment_software = None
