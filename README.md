@@ -1,6 +1,8 @@
 <img src="images/logo.png" />
 
-Python package that creates a submission for dbGaP.
+This Python package automates the process of preparing and validating data from the HuBMAP project for submission to dbGaP. It helps format metadata and data into the required structure, ensuring compliance with dbGaP's submission guidelines for genomic and phenotype data.
+
+For more information, visit [HuBMAP](https://www.hubmapconsortium.org/) and [dbGaP](https://www.ncbi.nlm.nih.gov/gap).
 
 ---
 Copyright © 2020-2025 Pittsburgh Supercomputing Center. All Rights Reserved.
