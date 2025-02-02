@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="hubmap-dbgap",
-    version="1.0",
+    version="2025.01",
     description="Generates submission for dbGaP",
     url="https://github.com/hubmapconsortium/py-hubmap-dbgap",
     author="Ivan Cao-Berg, Gesina Phillips",
