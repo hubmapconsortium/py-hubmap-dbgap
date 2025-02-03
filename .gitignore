@@ -26,3 +26,9 @@ ENV/
 *.log
 *.swp
 .DS_Store
+notebooks/phs*
+notebooks/*zip
+notebooks/daily*
+notebooks/.datasets/
+notebooks/.entity/
+notebooks/.provenance/

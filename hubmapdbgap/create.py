@@ -176,9 +176,7 @@ def submission(
 
         # THE METADATA
         try:
-            library_id = (
-                f'{metadata["ingest_metadata"]["metadata"]["library_id"]}-{hubmap_id}'
-            )
+            library_id = f'{metadata["metadata"]["library_id"]}-{hubmap_id}'
         except BaseException:
             library_id = f"lib-{hubmap_id}"
 
@@ -213,33 +211,31 @@ def submission(
             "DNA + RNA": "OTHER",
         }
 
-        library_source = analyte_class[
-            metadata["ingest_metadata"]["metadata"]["analyte_class"]
-        ]
+        library_source = analyte_class[metadata["metadata"]["analyte_class"]]
 
         if (
             metadata["dataset_type"][0] == "SNAREseq"
-            and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "RNA"
+            and metadata["metadata"]["analyte_class"] == "RNA"
         ):
             library_strategy = "RNA-Seq"
         elif (
             metadata["dataset_type"][0] == "SNAREseq"
-            and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "DNA"
+            and metadata["metadata"]["analyte_class"] == "DNA"
         ):
             library_strategy = "ATAC-seq"
         elif (
             metadata["dataset_type"][0] == "sciRNAseq"
-            and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "RNA"
+            and metadata["metadata"]["analyte_class"] == "RNA"
         ):
             library_strategy = "RNA-Seq"
         elif (
             metadata["dataset_type"][0] == "sciATACseq"
-            and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "RNA"
+            and metadata["metadata"]["analyte_class"] == "RNA"
         ):
             library_strategy = "RNA-Seq"
         elif (
             metadata["dataset_type"][0] == "sciATACseq"
-            and metadata["ingest_metadata"]["metadata"]["analyte_class"] == "DNA"
+            and metadata["metadata"]["analyte_class"] == "DNA"
         ):
             library_strategy = "ATAC-seq"
         else:
@@ -247,18 +243,14 @@ def submission(
             library_strategy = library_strategy[metadata["dataset_type"]]
 
         library_layout = {"paired-end": "paired", "paired end": "paired"}
-        library_layout = library_layout[
-            metadata["ingest_metadata"]["metadata"]["library_layout"]
-        ]
+        library_layout = library_layout[metadata["metadata"]["library_layout"]]
 
         # library_selection
         library_selection = "other"
 
         # platform
         platform = {"Illumina": "ILLUMINA"}
-        platform = platform[
-            metadata["ingest_metadata"]["metadata"]["acquisition_instrument_vendor"]
-        ]
+        platform = platform[metadata["metadata"]["acquisition_instrument_vendor"]]
 
         # instrument_model
         instrument_model = {
@@ -270,13 +262,25 @@ def submission(
             "HiSeq": "Illumina HiSeq 4000",
             "HiSeq 4000": "Illumina HiSeq 4000",
             "Nextseq2000": "NextSeq 2000",
+            "Novaseq6021": "Illumina NovaSeq 6000",
+            "Novaseq6022": "Illumina NovaSeq 6000",
+            "Novaseq6007": "Illumina NovaSeq 6000",
+            "Novaseq6011": "Illumina NovaSeq 6000",
+            "Novaseq6012": "Illumina NovaSeq 6000",
             "Novaseq6020": "Illumina NovaSeq 6000",
             "Novaseq6019": "Illumina NovaSeq 6000",
+            "Novaseq6022": "Illumina NovaSeq 6000",
+            "Novaseq6019": "Illumina NovaSeq 6000",
             "Novaseq6018": "Illumina NovaSeq 6000",
+            "Novaseq6014": "Illumina NovaSeq 6000",
+            "Novaseq6015": "Illumina NovaSeq 6000",
+            "Novaseq6008": "Illumina NovaSeq 6000",
             "Novaseq6016": "Illumina NovaSeq 6000",
             "Novaseq6015": "Illumina NovaSeq 6000",
             "Novaseq6010": "Illumina NovaSeq 6000",
             "Novaseq6006": "Illumina NovaSeq 6000",
+            "Novaseq6018": "Illumina NovaSeq 6000",
+            "Novaseq6017": "Illumina NovaSeq 6000",
             "Novaseq6005": "Illumina NovaSeq 6000",
             "Novaseq6004": "Illumina NovaSeq 6000",
             "Novaseq6003": "Illumina NovaSeq 6000",
@@ -284,23 +288,21 @@ def submission(
             "Novaseq6001": "Illumina NovaSeq 6000",
             "Nextseq500-NS500488": "NextSeq 550",
             "NextSeq2000": "NextSeq 2000",
-            "NextSeq550": "NextSeq 550"
+            "NextSeq550": "NextSeq 550",
         }
         instrument_model = instrument_model[
-            metadata["ingest_metadata"]["metadata"]["acquisition_instrument_model"]
+            metadata["metadata"]["acquisition_instrument_model"]
         ]
 
         assay_type = metadata["dataset_type"]
 
-        acquisition_instrument_vendor = metadata["ingest_metadata"]["metadata"][
+        acquisition_instrument_vendor = metadata["metadata"][
             "acquisition_instrument_vendor"
         ]
-        acquisition_instrument_model = metadata["ingest_metadata"]["metadata"][
+        acquisition_instrument_model = metadata["metadata"][
             "acquisition_instrument_model"
         ]
-        sequencing_reagent_kit_raw = metadata["ingest_metadata"]["metadata"][
-            "sequencing_reagent_kit"
-        ]
+        sequencing_reagent_kit_raw = metadata["metadata"]["sequencing_reagent_kit"]
         sequencing_reagent_kit = sequencing_reagent_kit_raw.replace(";", "")
 
         # @icaoberg link is needed to map to a protocol description
@@ -323,14 +325,10 @@ def submission(
             "10.17504/protocols.io.dm6gpb7p5lzp/v1": "Overview of scRNA-seq of Human Knee Meniscus",
         }
 
-        if "preparation_protocol_doi" in metadata["ingest_metadata"]["metadata"]:
-            protocols_io_doi = metadata["ingest_metadata"]["metadata"][
-                "preparation_protocol_doi"
-            ]
-        elif "protocols_io_doi" in metadata["ingest_metadata"]["metadata"]:
-            protocols_io_doi = metadata["ingest_metadata"]["metadata"][
-                "protocols_io_doi"
-            ]
+        if "preparation_protocol_doi" in metadata["metadata"]:
+            protocols_io_doi = metadata["metadata"]["preparation_protocol_doi"]
+        elif "protocols_io_doi" in metadata["metadata"]:
+            protocols_io_doi = metadata["metadata"]["protocols_io_doi"]
         else:
             protocols_io_doi = None
 
@@ -506,10 +504,8 @@ def __create_sample_attributes(df: pd.DataFrame, token: str, directory: str):
             analyte_class.append("DNA")
         elif datum["sample_id"] == "HBM773.WCXC.264":
             analyte_class.append("RNA")
-        elif "ingest_metadata" in metadata.keys():
-            analyte_class.append(
-                metadata["ingest_metadata"]["metadata"]["analyte_class"]
-            )
+        elif "metadata" in metadata.keys():
+            analyte_class.append(metadata["metadata"]["analyte_class"])
         else:
             print(datum["sample_id"])
 
